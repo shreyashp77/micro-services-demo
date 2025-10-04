@@ -11,6 +11,25 @@ import org.springframework.stereotype.Service;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.UserRepository;
 
+/**
+ * Service implementation for loading user-specific data.
+ * <p>
+ * This class implements the {@link org.springframework.security.core.userdetails.UserDetailsService}
+ * interface to provide custom logic for retrieving user details from the database.
+ * </p>
+ * 
+ * <p>
+ * It uses the {@link UserRepository} to fetch user information based on the provided username.
+ * If the user is not found, a {@link org.springframework.security.core.userdetails.UsernameNotFoundException}
+ * is thrown.
+ * </p>
+ * 
+ * <p>
+ * The returned {@link org.springframework.security.core.userdetails.User} object contains the username,
+ * password, and an empty list of authorities.
+ * </p>
+ * 
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 

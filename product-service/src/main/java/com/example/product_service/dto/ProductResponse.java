@@ -5,4 +5,5 @@ public record ProductResponse(
         String name,
         String description,
         Double price,
-        Integer quantity) {}
+        Integer quantity
+) {}

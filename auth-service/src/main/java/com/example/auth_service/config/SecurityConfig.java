@@ -39,6 +39,14 @@ public class SecurityConfig {
         return userDetailsService;
     }
 
+     /**
+     * Provides a PasswordEncoder bean for hashing passwords.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
     /**
      * Defines the security filter chain for the application.
      * This is where we configure which endpoints are public and which are
@@ -57,16 +65,17 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // @Bean
-    // public UserDetailsService userDetailsService() {
-    // UserDetails user = User.builder()
-    // .username("user")
-    // .password(passwordEncoder().encode("pwd"))
-    // .roles("USER")
-    // .build();
-    // return new InMemoryUserDetailsManager(user);
-    // }
-
+    /**
+     * Seeds an admin user into the database at application startup if the admin username and password
+     * are provided via application.properties file. If the admin user does not already exist, a new user
+     * with the specified credentials and the "ROLE_ADMIN" role is created and saved.
+     *
+     * @param userRepository   the repository used to access and persist User entities
+     * @param passwordEncoder  the encoder used to securely hash the admin password
+     * @param adminUsername    the username for the admin user, provided via the "admin.seed.username" property
+     * @param adminPassword    the password for the admin user, provided via the "admin.seed.password" property
+     * @return a CommandLineRunner that performs the seeding logic at application startup
+     */
     @Bean
     public CommandLineRunner seedAdminUser(
             UserRepository userRepository,
@@ -87,14 +96,6 @@ public class SecurityConfig {
                 System.out.println("Admin seed skipped: username or password not set.");
             }
         };
-    }
-
-    /**
-     * Provides a PasswordEncoder bean for hashing passwords.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     /**
