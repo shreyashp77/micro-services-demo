@@ -57,8 +57,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for stateless APIs
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/token").permitAll() // The token endpoint is public
-                        .anyRequest().authenticated() // All other endpoints require authentication
+                        .anyRequest().permitAll()       // All requests are kept public here, since gateway handles security
                 ) // Use stateless sessions
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
