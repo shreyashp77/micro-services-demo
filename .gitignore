@@ -1,0 +1,9 @@
+*.env
+.vscode/
+*.lst
+*.md
+*.class
+*.dumpstream
+*.jar
+*.original
+*.txt

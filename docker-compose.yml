@@ -1,0 +1,134 @@
+services:
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    env_file:
+      - ./api-gateway/.env
+    ports:
+      - "8080:8080"
+    networks:
+      - microservice-network
+    depends_on:
+      - auth-service
+      - product-service
+      - user-service
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    env_file:
+      - ./auth-service/.env
+    ports:
+      - "9000:9000"
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:${DB_PORT}/${AUTH_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${AUTH_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${AUTH_DB_PASSWORD}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    ports:
+      - "9001:9001"
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://product-db:${DB_PORT}/${PRODUCT_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${PRODUCT_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${PRODUCT_DB_PASSWORD}
+    depends_on:
+      product-db:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "9002:9002"
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:${DB_PORT}/${USER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${USER_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${USER_DB_PASSWORD}
+    depends_on:
+      user-db:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  user-db:
+    image: postgres:18
+    container_name: user-db
+    ports:
+      - "54322:${DB_PORT}"
+    environment:
+      POSTGRES_DB: ${USER_DB_NAME}
+      POSTGRES_USER: ${USER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD}
+      TZ: Asia/Kolkata
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USERNAME} -d ${USER_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - user_pgdata:/var/lib/postgresql/data
+
+  product-db:
+    image: postgres:18
+    container_name: product-db
+    ports:
+      - "54321:${DB_PORT}"
+    environment:
+      POSTGRES_DB: ${PRODUCT_DB_NAME}
+      POSTGRES_USER: ${PRODUCT_DB_USERNAME}
+      POSTGRES_PASSWORD: ${PRODUCT_DB_PASSWORD}
+      TZ: Asia/Kolkata
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PRODUCT_DB_USERNAME} -d ${PRODUCT_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - product_pgdata:/var/lib/postgresql/data
+
+  auth-db:
+    image: postgres:18
+    container_name: auth-db
+    ports:
+      - "54320:${DB_PORT}"
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USERNAME}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      TZ: Asia/Kolkata
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USERNAME} -d ${AUTH_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+
+networks:
+  microservice-network:
+    driver: bridge
+
+volumes:
+  user_pgdata:
+  product_pgdata:
+  auth_pgdata:
