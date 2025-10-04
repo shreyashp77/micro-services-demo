@@ -45,6 +45,13 @@ Once all environment variables are configured, navigate to the root directory an
 ```bash
 docker-compose up -d --build
 ```
+### 5. Stop the Application
+
+To stop the application, run:
+
+```bash
+docker-compose down
+```
 
 ---
 
