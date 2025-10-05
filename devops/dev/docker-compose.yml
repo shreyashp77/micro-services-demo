@@ -1,3 +1,4 @@
+# This is used for setting up a local Kafka environment for development and testing purposes.
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:6.2.0
