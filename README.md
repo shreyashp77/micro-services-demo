@@ -52,6 +52,15 @@ To stop the application, run:
 ```bash
 docker-compose down
 ```
+### 5. To start as a Spring Application on local dev setup
+
+Start all the services as a Spring Boot Application. Navigate to ./devops/dev/ folder, and run the following command: 
+
+```bash
+docker-compose up -d --build
+```
+
+This will start a local Kafka server on Docker.
 
 ---
 
