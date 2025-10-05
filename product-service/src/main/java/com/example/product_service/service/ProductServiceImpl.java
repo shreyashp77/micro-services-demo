@@ -1,15 +1,16 @@
 package com.example.product_service.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.example.product_service.dto.ProductRequest;
 import com.example.product_service.dto.ProductResponse;
 import com.example.product_service.exception.ProductNotFoundException;
 import com.example.product_service.mapper.ProductMapper;
 import com.example.product_service.model.Product;
 import com.example.product_service.repository.ProductRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -64,5 +65,17 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductResponse> searchProductsByName(String name) {
         return repo.findByNameContainingIgnoreCase(name).stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
+    public void updateProductStock(Long productId, int quantity) {
+        repo.findById(productId).map(product -> {
+            int newQuantity = product.getQuantity() - quantity;
+            if (newQuantity < 0) {
+                throw new IllegalArgumentException("Insufficient stock for product ID: " + productId);
+            }
+            product.setQuantity(newQuantity);
+            return repo.save(product);
+        }).orElseThrow(() -> new ProductNotFoundException("Product with id " + productId + " not found."));
     }
 }

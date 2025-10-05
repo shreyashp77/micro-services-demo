@@ -1,9 +1,9 @@
 package com.example.product_service.service;
 
+import java.util.List;
+
 import com.example.product_service.dto.ProductRequest;
 import com.example.product_service.dto.ProductResponse;
-
-import java.util.List;
 
 public interface ProductService {
     ProductResponse createProduct(ProductRequest request);
@@ -12,4 +12,6 @@ public interface ProductService {
     List<ProductResponse> getAllProducts();
     ProductResponse getProduct(Long id);
     List<ProductResponse> searchProductsByName(String name);
+    void updateProductStock(Long productId,
+            int quantity);
 }
