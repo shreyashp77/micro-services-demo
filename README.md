@@ -23,6 +23,7 @@ Follow the steps below to set up the project in your local development environme
 - Repeat the same steps for the `.env.sample` files located in:
   - `user-service`
   - `product-service`
+  - `order-service`
   - `auth-service`
   - `api-gateway`
 
@@ -60,7 +61,7 @@ Start all the services as a Spring Boot Application. Navigate to ./devops/dev/ f
 docker-compose up -d --build
 ```
 
-This will start a local Kafka server on Docker.
+This will start a local Kafka server and redis server on Docker.
 
 ---
 
