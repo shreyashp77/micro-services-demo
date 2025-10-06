@@ -1,5 +1,13 @@
 # This is used for setting up a local Kafka environment for development and testing purposes.
 services:
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+        
   zookeeper:
     image: confluentinc/cp-zookeeper:6.2.0
     ports:
@@ -28,3 +36,6 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     depends_on:
       - kafka
+
+volumes:
+  redis-data:

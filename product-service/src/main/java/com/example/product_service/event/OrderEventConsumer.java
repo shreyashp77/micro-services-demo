@@ -31,7 +31,7 @@ public class OrderEventConsumer {
         try {
             OrderEvent order = objectMapper.readValue(messageJson, OrderEvent.class);
             System.out.println("Received order create event: " + order);
-            productService.updateProductStock(( order.productId()), order.quantity());
+            productService.updateProductStock(order.productId(), order.quantity());
             System.out.println("Product stock updated for product ID: " + order.productId());
             kafkaTemplate.send("product-updated", objectMapper.writeValueAsString(order));
         } catch (Exception e) {

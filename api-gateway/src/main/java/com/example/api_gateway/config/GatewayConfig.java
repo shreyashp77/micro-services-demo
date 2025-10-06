@@ -35,9 +35,10 @@ public class GatewayConfig {
                         .filters(f -> f.filter(filter.apply(new AuthenticationFilter.Config())))
                         .uri("http://user-service:9002"))
                         // .uri("http://localhost:9002"))       // use this for local testing
-                .route("product-service", r -> r.path("/products/**")
+                        
+                .route("order-service", r -> r.path("/orders/**")
                         .filters(f -> f.filter(filter.apply(new AuthenticationFilter.Config())))
-                        .uri("http://product-service:9003"))
+                        .uri("http://order-service:9003"))
                         // .uri("http://localhost:9003"))       // use this for local testing
                 .build();
     }

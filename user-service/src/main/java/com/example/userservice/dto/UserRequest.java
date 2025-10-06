@@ -2,7 +2,7 @@ package com.example.userservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record UserDTO (
+public record UserRequest (
     @NotBlank(message = "Name is mandatory")
     String name,
 

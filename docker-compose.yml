@@ -39,11 +39,17 @@ services:
       - "9001:9001"
     networks:
       - microservice-network
+    restart: on-failure:3  # Retry up to 3 times
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://product-db:${DB_PORT}/${PRODUCT_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${PRODUCT_DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${PRODUCT_DB_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_CACHE_TYPE: ${SPRING_CACHE_TYPE}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_TIMEOUT: ${REDIS_CACHE_TTL}
+      SPRING_DATA_REDIS_CONNECT_TIMEOUT: ${SPRING_DATA_REDIS_CONNECT_TIMEOUT}
     depends_on:
       product-db:
         condition: service_healthy
@@ -51,6 +57,9 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
   user-service:
     build: ./user-service
     container_name: user-service
@@ -58,17 +67,25 @@ services:
       - "9002:9002"
     networks:
       - microservice-network
+    restart: on-failure:3  # Retry up to 3 times
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:${DB_PORT}/${USER_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${USER_DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${USER_DB_PASSWORD}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_CACHE_TYPE: ${SPRING_CACHE_TYPE}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_DATA_REDIS_TIMEOUT: ${REDIS_CACHE_TTL}
+      SPRING_DATA_REDIS_CONNECT_TIMEOUT: ${SPRING_DATA_REDIS_CONNECT_TIMEOUT}
     depends_on:
       user-db:
         condition: service_healthy
       auth-service:
         condition: service_started
       kafka:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   order-service:
@@ -174,6 +191,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+  
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - microservice-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s  # Give Redis time to fully initialize
 
 networks:
   microservice-network:
@@ -183,3 +216,4 @@ volumes:
   user_pgdata:
   product_pgdata:
   auth_pgdata:
+  redis-data:

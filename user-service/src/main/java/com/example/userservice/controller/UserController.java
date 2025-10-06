@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.userservice.dto.UserDTO;
+import com.example.userservice.dto.UserRequest;
+import com.example.userservice.dto.UserResponse;
 import com.example.userservice.entity.User;
 import com.example.userservice.service.UserService;
 
@@ -28,24 +29,30 @@ public class UserController {
     }
 
     @GetMapping
-    ResponseEntity<List<UserDTO>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    ResponseEntity<List<UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers().stream().map(u -> new UserResponse(u.getId(), u.getName(), u.getEmail())).toList());
+    }
+
+    @GetMapping("/{id}")
+    ResponseEntity<UserResponse> getUserById(@PathVariable String id) {
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(new UserResponse(user.getId(), user.getName(), user.getEmail()));
     }
 
     @PostMapping
-    ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userToCreate) {
-        UserDTO createdUser = userService.createUser(userToCreate);
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+    ResponseEntity<UserResponse> createUser(@RequestBody UserRequest userToCreate) {
+        User createdUser = userService.createUser(userToCreate);
+        return new ResponseEntity<>(new UserResponse(createdUser.getId(), createdUser.getName(), createdUser.getEmail()), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userToUpdate) {
+    ResponseEntity<UserResponse> updateUser(@PathVariable String id, @RequestBody UserRequest userToUpdate) {
         User updatedUser = userService.updateUser(id, userToUpdate);
-        return ResponseEntity.ok(new UserDTO(updatedUser.getName(), updatedUser.getEmail()));
+        return ResponseEntity.ok(new UserResponse(updatedUser.getId(), updatedUser.getName(), updatedUser.getEmail()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build(); // 204 No Content
     }

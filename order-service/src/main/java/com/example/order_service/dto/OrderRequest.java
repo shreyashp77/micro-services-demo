@@ -1,14 +1,14 @@
 package com.example.order_service.dto;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 public record OrderRequest (
 
-    @NotNull(message = "Product ID is mandatory")
-    Long productId,
+    @NotBlank(message = "Product ID is mandatory")
+    String productId,
     @Min(value = 1, message = "Minimum quantity is 1")
     int quantity,
-    @NotNull(message = "User ID is mandatory")
-    Long userId
+    @NotBlank(message = "User ID is mandatory")
+    String userId
 ) {} 

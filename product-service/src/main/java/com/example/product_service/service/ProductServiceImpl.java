@@ -3,6 +3,9 @@ package com.example.product_service.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.example.product_service.dto.ProductRequest;
@@ -29,7 +32,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse updateProduct(Long id, ProductRequest request) {
+    // Cache product data when updating to keep cache consistent
+    @CachePut(value = "products", key = "#id")
+    public ProductResponse updateProduct(String id, ProductRequest request) {
         Product found = repo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
 
         found.setName(request.name());
@@ -41,7 +46,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(Long id) {
+    // Evict the cache when a product is deleted
+    @CacheEvict(value = "products", key = "#id")
+    public void deleteProduct(String id) {
         if(!repo.existsById(id))
             throw new ProductNotFoundException("Product with id " + id + " not found.");
         repo.deleteById(id);
@@ -53,7 +60,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResponse getProduct(Long id) {
+    // Cache product data by id to improve performance
+    @Cacheable(value = "products", key = "#id")
+    public ProductResponse getProduct(String id) {
         return mapper.toResponse(
                 repo.findById(id).
                         orElseThrow(
@@ -63,19 +72,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    // Cache product data by name to improve performance
+    @Cacheable(value = "products", key = "#name")
     public List<ProductResponse> searchProductsByName(String name) {
         return repo.findByNameContainingIgnoreCase(name).stream().map(mapper::toResponse).toList();
     }
 
     @Override
-    public void updateProductStock(Long productId, int quantity) {
-        repo.findById(productId).map(product -> {
+    // Cache product data when updating to keep cache consistent
+    @CachePut(value = "products", key = "#id")
+    public void updateProductStock(String id, int quantity) {
+        repo.findById(id).map(product -> {
             int newQuantity = product.getQuantity() - quantity;
             if (newQuantity < 0) {
-                throw new IllegalArgumentException("Insufficient stock for product ID: " + productId);
+                throw new IllegalArgumentException("Insufficient stock for product ID: " + id);
             }
             product.setQuantity(newQuantity);
             return repo.save(product);
-        }).orElseThrow(() -> new ProductNotFoundException("Product with id " + productId + " not found."));
+        }).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
     }
 }
