@@ -7,3 +7,5 @@
 *.jar
 *.original
 *.txt
+*.bat
+*.pyc

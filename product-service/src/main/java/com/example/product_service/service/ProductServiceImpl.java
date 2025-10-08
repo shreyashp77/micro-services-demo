@@ -35,7 +35,8 @@ public class ProductServiceImpl implements ProductService {
     // Cache product data when updating to keep cache consistent
     @CachePut(value = "products", key = "#id")
     public ProductResponse updateProduct(String id, ProductRequest request) {
-        Product found = repo.findById(id).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
+        Product found = repo.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
 
         found.setName(request.name());
         found.setDescription(request.description());
@@ -49,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
     // Evict the cache when a product is deleted
     @CacheEvict(value = "products", key = "#id")
     public void deleteProduct(String id) {
-        if(!repo.existsById(id))
+        if (!repo.existsById(id))
             throw new ProductNotFoundException("Product with id " + id + " not found.");
         repo.deleteById(id);
     }
@@ -64,11 +65,8 @@ public class ProductServiceImpl implements ProductService {
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProduct(String id) {
         return mapper.toResponse(
-                repo.findById(id).
-                        orElseThrow(
-                                () -> new ProductNotFoundException("Product with id " + id + " not found.")
-                        )
-        );
+                repo.findById(id).orElseThrow(
+                        () -> new ProductNotFoundException("Product with id " + id + " not found.")));
     }
 
     @Override
@@ -81,14 +79,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     // Cache product data when updating to keep cache consistent
     @CachePut(value = "products", key = "#id")
-    public void updateProductStock(String id, int quantity) {
-        repo.findById(id).map(product -> {
+    public ProductResponse updateProductStock(String id, int quantity) {
+        return repo.findById(id).map(product -> {
             int newQuantity = product.getQuantity() - quantity;
             if (newQuantity < 0) {
                 throw new IllegalArgumentException("Insufficient stock for product ID: " + id);
             }
             product.setQuantity(newQuantity);
-            return repo.save(product);
+            return mapper.toResponse(repo.save(product));
         }).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
     }
 }
