@@ -63,7 +63,7 @@ Start all the services as a Spring Boot Application. Navigate to ./devops/dev/ f
 docker-compose up -d --build
 ```
 
-This will start a local Kafka server, Redis server, and a Mailhog on Docker.
+This will start a local Kafka server, Redis server, and a Mailhog server on Docker.
 
 ---
 
