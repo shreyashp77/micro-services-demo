@@ -2,9 +2,9 @@
 
 Ensure the following tools are installed on your local machine:
 
-- [JDK 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)  
-- [Docker](https://docs.docker.com/desktop/setup/install/windows-install/)  
-- [Apache Maven](https://maven.apache.org/download.cgi)  
+- [JDK 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+- [Docker](https://docs.docker.com/desktop/setup/install/windows-install/)
+- [Apache Maven](https://maven.apache.org/download.cgi)
 - An IDE of your choice (e.g., IntelliJ IDEA, VS Code)
 
 ---
@@ -28,7 +28,7 @@ Follow the steps below to set up the project in your local development environme
   - `api-gateway`
 
 > ⚠️ **Note:**  
-The `.env` files in both `api-gateway` and `auth-service` require an additional environment variable:
+> The `.env` files in both `api-gateway` and `auth-service` require an additional environment variable:
 
 - `JWT_SECRET` – a strong, base64-encoded secret key used for JWT authentication.
 
@@ -46,6 +46,7 @@ Once all environment variables are configured, navigate to the root directory an
 ```bash
 docker-compose up -d --build
 ```
+
 ### 5. Stop the Application
 
 To stop the application, run:
@@ -53,15 +54,16 @@ To stop the application, run:
 ```bash
 docker-compose down
 ```
+
 ### 6. To start as a Spring Application on local dev setup
 
-Start all the services as a Spring Boot Application. Navigate to ./devops/dev/ folder, and run the following command: 
+Start all the services as a Spring Boot Application. Navigate to ./devops/dev/ folder, and run the following command:
 
 ```bash
 docker-compose up -d --build
 ```
 
-This will start a local Kafka server and redis server on Docker.
+This will start a local Kafka server, Redis server, and a Mailhog on Docker.
 
 ---
 
