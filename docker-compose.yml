@@ -1,20 +1,20 @@
+version: '3.8'
+
 services:
 
   eureka-server:
     build: ./service-registry
+    image: shreyashp77/service-registry:${EUREKA_SERVER_VERSION}
     container_name: eureka-server
     ports:
       - "8761:8761" # Default Eureka port
     networks:
       - microservice-network
     environment:
-      # Tell Eureka Server NOT to register itself and NOT to fetch the registry
       EUREKA_CLIENT_REGISTER_WITH_EUREKA: false
       EUREKA_CLIENT_FETCH_REGISTRY: false
-      # The server needs to know its own URL (using its service name)
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     healthcheck:
-      # test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"] # Requires Spring Boot Actuator
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8761/actuator/health"]
       interval: 10s
       timeout: 5s
@@ -23,6 +23,7 @@ services:
 
   api-gateway:
     build: ./api-gateway
+    image: shreyashp77/api-gateway:${API_GATEWAY_VERSION}
     container_name: api-gateway
     env_file:
       - ./api-gateway/.env
@@ -31,7 +32,6 @@ services:
     networks:
       - microservice-network
     environment:
-      # Tell the API Gateway where the Eureka server is located
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       - eureka-server
@@ -42,6 +42,7 @@ services:
 
   auth-service:
     build: ./auth-service
+    image: shreyashp77/auth-service:${AUTH_SERVICE_VERSION}
     container_name: auth-service
     env_file:
       - ./auth-service/.env
@@ -53,7 +54,6 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:${DB_PORT}/${AUTH_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${AUTH_DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${AUTH_DB_PASSWORD}
-      # Tell the client where to register
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -63,12 +63,13 @@ services:
 
   product-service:
     build: ./product-service
+    image: shreyashp77/product-service:${PRODUCT_SERVICE_VERSION}
     container_name: product-service
     ports:
       - "9001:9001"
     networks:
       - microservice-network
-    restart: on-failure:3 
+    restart: on-failure:3
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://product-db:${DB_PORT}/${PRODUCT_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${PRODUCT_DB_USERNAME}
@@ -79,7 +80,6 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_TIMEOUT: ${REDIS_CACHE_TTL}
       SPRING_DATA_REDIS_CONNECT_TIMEOUT: ${SPRING_DATA_REDIS_CONNECT_TIMEOUT}
-      # Tell the client where to register
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -95,6 +95,7 @@ services:
 
   user-service:
     build: ./user-service
+    image: shreyashp77/user-service:${USER_SERVICE_VERSION}
     container_name: user-service
     ports:
       - "9002:9002"
@@ -111,7 +112,6 @@ services:
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_DATA_REDIS_TIMEOUT: ${REDIS_CACHE_TTL}
       SPRING_DATA_REDIS_CONNECT_TIMEOUT: ${SPRING_DATA_REDIS_CONNECT_TIMEOUT}
-      # Tell the client where to register
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -127,6 +127,7 @@ services:
 
   order-service:
     build: ./order-service
+    image: shreyashp77/order-service:${ORDER_SERVICE_VERSION}
     container_name: order-service
     ports:
       - "9003:9003"
@@ -134,7 +135,6 @@ services:
       - microservice-network
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      # Tell the client where to register
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       eureka-server:
@@ -143,9 +143,10 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
-  
-  email-service: # (No need to update if it doesn't need to register as an Eureka client)
+
+  email-service:
     build: ./email-service
+    image: shreyashp77/email-service:${EMAIL_SERVICE_VERSION}
     container_name: email-service
     env_file:
       - ./email-service/.env
@@ -248,7 +249,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    
+
   redis:
     image: redis/redis-stack-server:latest
     container_name: redis
