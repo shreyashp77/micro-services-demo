@@ -2,6 +2,20 @@
 
 > **Portfolio Project**: A comprehensive demonstration of a modern, event-driven microservices architecture using Spring Boot, Kafka, Docker, and Kubernetes-ready patterns.
 
+![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=java)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.6-green?style=for-the-badge&logo=spring-boot)
+![Docker](https://img.shields.io/badge/Docker-Enabled-blue?style=for-the-badge&logo=docker)
+![Kafka](https://img.shields.io/badge/Kafka-Event_Driven-black?style=for-the-badge&logo=apache-kafka)
+
+## 📑 Quick Links
+- [Project Overview](#-project-overview)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+- [API Reference](#-api-reference)
+
+---
+
 ## 📖 Project Overview
 
 This repository demonstrates a robust e-commerce backend built with **Spring Boot** microservices. It showcases industry-standard patterns including **Service Discovery** (Eureka), **API Gateway** (Spring Cloud Gateway), **Centralized Authentication** (JWT), **Event-Driven Architecture** (Kafka), and **Distributed Caching** (Redis).
@@ -14,6 +28,7 @@ The system handles core e-commerce flows: user registration/auth, product manage
 *   **Secure**: Centralized JWT authentication and authorization at the Gateway and Service level.
 *   **Resilient**: Circuit breaking and service discovery integration.
 *   **Containerized**: Fully Dockerized setup with `docker-compose` for easy local orchestration.
+*   **Developer Experience**: Integrated `spring-dotenv` for seamless local configuration management.
 
 ---
 
@@ -94,23 +109,6 @@ sequenceDiagram
     end
 ```
 
-### Deployment Architecture
-
-```mermaid
-graph LR
-    subgraph Host Machine
-        Docker[Docker Engine]
-        subgraph Network[Bridge Network]
-            Container1[API Gateway]
-            Container2[Services...]
-            Container3[Databases]
-            Container4[Message Broker]
-        end
-    end
-    
-    Dev[Developer] -->|docker-compose up| Docker
-```
-
 ---
 
 ## 🛠️ Tech Stack
@@ -131,31 +129,126 @@ graph LR
 
 ---
 
+## 🚀 Getting Started
+
+### Prerequisites
+*   [Docker Desktop](https://www.docker.com/products/docker-desktop)
+*   [Java 17+](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) (for local dev)
+*   [Maven](https://maven.apache.org/download.cgi)
+
+### 1. Configuration Setup
+This project uses `.env` files for configuration. You must set these up before running the application.
+
+1.  **Root Configuration**:
+    ```bash
+    cp .env.sample .env
+    ```
+    *This file contains global versions and database credentials.*
+
+2.  **Service Configurations**:
+    Navigate to each service directory and create the `.env` file from the sample. This is required for both Docker and local execution (via `spring-dotenv`).
+    ```bash
+    # Run this for: api-gateway, auth-service, user-service, product-service, order-service, email-service
+    cp <service-dir>/.env.sample <service-dir>/.env
+    ```
+
+3.  **Security Configuration (Critical)**:
+    *   Generate a strong Base64 secret key (you can use [this tool](https://generate.plus/en/base64)).
+    *   Update the `JWT_SECRET` variable in **both** `api-gateway/.env` and `auth-service/.env`.
+    *   ⚠️ **They must match!**
+
+### 2. Run with Docker (Recommended)
+The easiest way to run the entire system.
+
+1.  **Build and Start**:
+    ```bash
+    docker-compose up -d --build
+    ```
+    *This starts Postgres, Kafka, Zookeeper, Redis, Mailhog, and all microservices.*
+
+2.  **Verify Services**:
+    *   **Eureka Dashboard**: [http://localhost:8761](http://localhost:8761)
+    *   **Mailhog (Email Test)**: [http://localhost:8025](http://localhost:8025)
+    *   **API Gateway**: [http://localhost:8080](http://localhost:8080)
+
+3.  **Stop**:
+    ```bash
+    docker-compose down
+    ```
+
+### 3. Local Development (Hybrid)
+To run a specific service (e.g., `product-service`) locally while keeping infrastructure in Docker:
+
+1.  **Start Infrastructure Only**:
+    ```bash
+    cd devops/dev
+    docker-compose up -d
+    ```
+    *Starts Kafka, Redis, Zookeeper, Mailhog, and Databases.*
+
+2.  **Run Service**:
+    ```bash
+    cd product-service
+    mvn spring-boot:run
+    ```
+    *The service will automatically load variables from its local `.env` file.*
+
+---
+
 ## 🔌 API Reference
 
-### Authentication
+## 🔌 API Reference
+
+### 🛡️ Auth Service
 **Base URL**: `http://localhost:8080/auth`
 
 | Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `POST` | `/token` | Login to get JWT. Requires Basic Auth header. | No |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/token` | Authenticate and get JWT. Requires Basic Auth header. | No |
 | `POST` | `/register` | Register a new admin user. | No |
 
-**Example: Get Token**
+**Example: Register Admin**
 ```bash
-# Basic Auth (username:password base64 encoded)
-curl -X POST http://localhost:8080/auth/token \
-  -H "Authorization: Basic dXNlcnNlcnZpY2VfdXNlcjpyb290"
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "password123"
+  }'
 ```
 
-### Products
+### 👤 User Service
+**Base URL**: `http://localhost:8080/users`
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Get all users |
+| `GET` | `/{id}` | Get user by ID |
+| `POST` | `/` | Create a new user |
+| `PUT` | `/{id}` | Update a user |
+| `DELETE` | `/{id}` | Delete a user |
+
+**Example: Create User**
+```bash
+curl -X POST http://localhost:8080/users \
+  -H "Authorization: Bearer <YOUR_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com"
+  }'
+```
+
+### 📦 Product Service
 **Base URL**: `http://localhost:8080/products`
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+| :--- | :--- | :--- |
 | `GET` | `/` | List all products |
 | `GET` | `/{id}` | Get product details |
-| `POST` | `/` | Create a product (Admin) |
+| `POST` | `/` | Create a product |
+| `PATCH` | `/{id}` | Update a product |
+| `DELETE` | `/{id}` | Delete a product |
 
 **Example: Create Product**
 ```bash
@@ -164,16 +257,17 @@ curl -X POST http://localhost:8080/products \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Laptop",
+    "description": "High performance laptop",
     "price": 1200.00,
-    "description": "High performance laptop"
+    "quantity": 10
   }'
 ```
 
-### Orders
+### 🛒 Order Service
 **Base URL**: `http://localhost:8080/orders`
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+| :--- | :--- | :--- |
 | `POST` | `/` | Place a new order |
 
 **Example: Place Order**
@@ -182,60 +276,11 @@ curl -X POST http://localhost:8080/orders \
   -H "Authorization: Bearer <YOUR_JWT>" \
   -H "Content-Type: application/json" \
   -d '{
-    "productId": "12345",
+    "productId": "prod-123",
+    "userId": "user-456",
     "quantity": 1
   }'
 ```
-
----
-
-## 🚀 Run Locally
-
-### Prerequisites
-*   Docker & Docker Compose
-*   Java 17+ (for local dev)
-*   Maven
-
-### Quick Start (Docker)
-The easiest way to run the entire system is via Docker Compose.
-
-1.  **Clone the repository**
-    ```bash
-    git clone <repo-url>
-    cd micro-services-demo
-    ```
-
-2.  **Configure Environment**
-    Copy the sample env file:
-    ```bash
-    cp .env.sample .env
-    ```
-    *Note: You may need to do this for individual services if running them standalone, but the root `docker-compose.yml` handles most env injection.*
-
-3.  **Start Services**
-    ```bash
-    docker-compose up -d --build
-    ```
-    *This will start Postgres, Kafka, Zookeeper, Redis, Mailhog, and all microservices.*
-
-4.  **Verify**
-    *   **Eureka Dashboard**: [http://localhost:8761](http://localhost:8761)
-    *   **Mailhog (Email Test)**: [http://localhost:8025](http://localhost:8025)
-    *   **API Gateway**: [http://localhost:8080](http://localhost:8080)
-
-### Local Development (Hybrid)
-To run a specific service (e.g., `product-service`) locally while keeping infra in Docker:
-
-1.  Start infrastructure only:
-    ```bash
-    cd devops/dev
-    docker-compose up -d
-    ```
-2.  Run the service:
-    ```bash
-    cd product-service
-    mvn spring-boot:run
-    ```
 
 ---
 
@@ -251,7 +296,7 @@ To run a specific service (e.g., `product-service`) locally while keeping infra 
 
 *   **JWT Authentication**: The `auth-service` issues tokens signed with a secret key.
 *   **Gateway Validation**: The `api-gateway` validates the signature of incoming requests before routing.
-*   **Secret Management**: Secrets are currently passed via environment variables.
+*   **Secret Management**: Secrets are managed via `.env` files.
     *   *Remediation Note*: For production, use a secret manager (Vault, AWS Secrets Manager) instead of `.env` files.
 
 ---
@@ -260,7 +305,7 @@ To run a specific service (e.g., `product-service`) locally while keeping infra 
 
 *   **User DB**: Stores user profiles and credentials.
 *   **Product DB**: Stores product catalog (Name, Price, Description, Stock).
-*   **Auth DB**: Stores admin/auth specific data (if separate from User DB).
+*   **Auth DB**: Stores admin/auth specific data.
 *   **Migrations**: Database schemas are managed via Hibernate `update` (auto-ddl).
 
 ---
