@@ -197,8 +197,6 @@ To run a specific service (e.g., `product-service`) locally while keeping infras
 
 ## 🔌 API Reference
 
-## 🔌 API Reference
-
 ### 🛡️ Auth Service
 **Base URL**: `http://localhost:8080/auth`
 
