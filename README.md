@@ -1,111 +1,285 @@
-## 🔧 Prerequisites
+# Microservices E-Commerce Demo
 
-Ensure the following tools are installed on your local machine:
+> **Portfolio Project**: A comprehensive demonstration of a modern, event-driven microservices architecture using Spring Boot, Kafka, Docker, and Kubernetes-ready patterns.
 
-- [JDK 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
-- [Docker](https://docs.docker.com/desktop/setup/install/windows-install/)
-- [Apache Maven](https://maven.apache.org/download.cgi)
-- An IDE of your choice (e.g., IntelliJ IDEA, VS Code)
+## 📖 Project Overview
 
----
+This repository demonstrates a robust e-commerce backend built with **Spring Boot** microservices. It showcases industry-standard patterns including **Service Discovery** (Eureka), **API Gateway** (Spring Cloud Gateway), **Centralized Authentication** (JWT), **Event-Driven Architecture** (Kafka), and **Distributed Caching** (Redis).
 
-## 🚀 Project Setup Guide
+The system handles core e-commerce flows: user registration/auth, product management, order placement, and asynchronous email notifications.
 
-Follow the steps below to set up the project in your local development environment:
-
-### 1. Environment Configuration
-
-- Rename the `.env.sample` file located in the root directory to `.env`.
-- Add the required values such as database URLs, usernames, and passwords.
-
-### 2. Microservice Configurations
-
-- Repeat the same steps for the `.env.sample` files located in:
-  - `user-service`
-  - `product-service`
-  - `order-service`
-  - `auth-service`
-  - `api-gateway`
-
-> ⚠️ **Note:**  
-> The `.env` files in both `api-gateway` and `auth-service` require an additional environment variable:
-
-- `JWT_SECRET` – a strong, base64-encoded secret key used for JWT authentication.
-
-### 3. Generate a JWT Secret
-
-- You can generate a secure, base64-encoded JWT secret from [this tool](https://generate.plus/en/base64).
-- **Ensure the same `JWT_SECRET` value is used in both `api-gateway` and `auth-service`.**
+### Key Features
+*   **Microservices Architecture**: Decoupled services for scalability and independent deployment.
+*   **Event-Driven**: Asynchronous communication between Order and Email services using Kafka.
+*   **Secure**: Centralized JWT authentication and authorization at the Gateway and Service level.
+*   **Resilient**: Circuit breaking and service discovery integration.
+*   **Containerized**: Fully Dockerized setup with `docker-compose` for easy local orchestration.
 
 ---
 
-### 4. Start the Application
+## 🏗️ Architecture
 
-Once all environment variables are configured, navigate to the root directory and run:
+### High-Level Components
 
-```bash
-docker-compose up -d --build
+```mermaid
+graph TD
+    Client([Client App / Postman]) -->|HTTPS| Gateway[API Gateway :8080]
+    
+    subgraph Infrastructure
+        Eureka[Eureka Registry :8761]
+        Kafka[Kafka Broker :9092]
+        Redis[Redis Cache :6379]
+        Zookeeper[Zookeeper :2181]
+    end
+
+    subgraph Services
+        Auth[Auth Service :9000]
+        User[User Service :9002]
+        Product[Product Service :9001]
+        Order[Order Service :9003]
+        Email[Email Service :Python]
+    end
+
+    subgraph Databases
+        AuthDB[(Auth DB)]
+        UserDB[(User DB)]
+        ProductDB[(Product DB)]
+    end
+
+    %% Connections
+    Gateway -->|Auth Check| Auth
+    Gateway -->|Route| User
+    Gateway -->|Route| Product
+    Gateway -->|Route| Order
+    
+    Auth --> AuthDB
+    User --> UserDB
+    Product --> ProductDB
+    Product -.->|Cache| Redis
+    
+    Order -->|Publish 'order-created'| Kafka
+    Kafka -->|Consume 'order-created'| Email
+    
+    %% Service Discovery
+    Gateway -.->|Discover| Eureka
+    Auth -.->|Register| Eureka
+    User -.->|Register| Eureka
+    Product -.->|Register| Eureka
+    Order -.->|Register| Eureka
 ```
 
-### 5. Stop the Application
+### Request Flow (Order Placement)
 
-To stop the application, run:
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant Auth as Auth Service
+    participant Order as Order Service
+    participant Kafka
+    participant Email as Email Service
 
-```bash
-docker-compose down
+    Client->>Gateway: POST /orders (Bearer Token)
+    Gateway->>Auth: Validate Token
+    Auth-->>Gateway: Token Valid
+    Gateway->>Order: Forward Request
+    Order->>Order: Create Order Logic
+    Order->>Kafka: Publish "order-created" event
+    Order-->>Gateway: 200 OK
+    Gateway-->>Client: 200 OK (Order Placed)
+    
+    par Async Processing
+        Kafka->>Email: Consume event
+        Email->>Email: Send Confirmation Email
+    end
 ```
 
-### 6. To start as a Spring Application on local dev setup
+### Deployment Architecture
 
-Start all the services as a Spring Boot Application. Navigate to ./devops/dev/ folder, and run the following command:
-
-```bash
-docker-compose up -d --build
+```mermaid
+graph LR
+    subgraph Host Machine
+        Docker[Docker Engine]
+        subgraph Network[Bridge Network]
+            Container1[API Gateway]
+            Container2[Services...]
+            Container3[Databases]
+            Container4[Message Broker]
+        end
+    end
+    
+    Dev[Developer] -->|docker-compose up| Docker
 ```
-
-This will start a local Kafka server, Redis server, and a Mailhog server on Docker.
 
 ---
 
-## 🛠️ Troubleshooting
+## 🛠️ Tech Stack
 
-If you encounter issues while setting up or running the project, refer to the common problems and solutions below:
-
-### 🔄 Docker Containers Not Starting
-
-- **Symptom:** One or more containers keep restarting or fail to start.
-- **Solution:**
-  - Run `docker-compose logs -f` to view real-time logs.
-  - Check if all required `.env` files are present and properly configured.
-  - Ensure no other services (e.g., databases) are running on conflicting ports.
-
-### 🔐 Invalid or Missing JWT_SECRET
-
-- **Symptom:** Authentication fails with JWT-related errors.
-- **Solution:**
-  - Confirm that the `JWT_SECRET` environment variable is **present and identical** in both `api-gateway` and `auth-service`.
-  - Regenerate the key using [this tool](https://generate.plus/en/base64) if needed.
-
-### 🧱 Database Connection Issues
-
-- **Symptom:** Services cannot connect to the database.
-- **Solution:**
-  - Verify that your database containers are running.
-  - Double-check your `.env` files for correct database URLs, usernames, and passwords.
-  - Ensure the ports in the `.env` and `docker-compose.yml` match.
-
-### 🐘 Maven Build Fails
-
-- **Symptom:** Build fails with errors related to missing dependencies or plugins.
-- **Solution:**
-  - Make sure you have **Apache Maven** installed and it's accessible via your system's PATH.
-  - Run `mvn clean install` in each service directory to resolve dependencies.
-
-### 🌐 Port Conflicts
-
-- **Symptom:** Docker reports that a port is already in use.
-- **Solution:**
-  - Identify the conflicting process using `lsof -i :<port>` (Linux/macOS) or `netstat -aon | findstr :<port>` (Windows).
-  - Stop the conflicting process or change the port in your `docker-compose.yml`.
+| Category | Technology | Usage |
+|----------|------------|-------|
+| **Framework** | Spring Boot 3.5.6 | Core framework for all Java services |
+| **Language** | Java 17 | Primary backend language |
+| **Language** | Python 3 | Email service consumer |
+| **Discovery** | Netflix Eureka | Service registration and discovery |
+| **Gateway** | Spring Cloud Gateway | Entry point, routing, and auth validation |
+| **Database** | PostgreSQL 18 | Relational data storage (per-service DBs) |
+| **Messaging** | Apache Kafka | Asynchronous event streaming |
+| **Caching** | Redis | Distributed caching for products |
+| **Security** | Spring Security + JWT | Stateless authentication |
+| **Build** | Maven | Dependency management |
+| **Container** | Docker & Docker Compose | Containerization and orchestration |
 
 ---
+
+## 🔌 API Reference
+
+### Authentication
+**Base URL**: `http://localhost:8080/auth`
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/token` | Login to get JWT. Requires Basic Auth header. | No |
+| `POST` | `/register` | Register a new admin user. | No |
+
+**Example: Get Token**
+```bash
+# Basic Auth (username:password base64 encoded)
+curl -X POST http://localhost:8080/auth/token \
+  -H "Authorization: Basic dXNlcnNlcnZpY2VfdXNlcjpyb290"
+```
+
+### Products
+**Base URL**: `http://localhost:8080/products`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | List all products |
+| `GET` | `/{id}` | Get product details |
+| `POST` | `/` | Create a product (Admin) |
+
+**Example: Create Product**
+```bash
+curl -X POST http://localhost:8080/products \
+  -H "Authorization: Bearer <YOUR_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Laptop",
+    "price": 1200.00,
+    "description": "High performance laptop"
+  }'
+```
+
+### Orders
+**Base URL**: `http://localhost:8080/orders`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/` | Place a new order |
+
+**Example: Place Order**
+```bash
+curl -X POST http://localhost:8080/orders \
+  -H "Authorization: Bearer <YOUR_JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": "12345",
+    "quantity": 1
+  }'
+```
+
+---
+
+## 🚀 Run Locally
+
+### Prerequisites
+*   Docker & Docker Compose
+*   Java 17+ (for local dev)
+*   Maven
+
+### Quick Start (Docker)
+The easiest way to run the entire system is via Docker Compose.
+
+1.  **Clone the repository**
+    ```bash
+    git clone <repo-url>
+    cd micro-services-demo
+    ```
+
+2.  **Configure Environment**
+    Copy the sample env file:
+    ```bash
+    cp .env.sample .env
+    ```
+    *Note: You may need to do this for individual services if running them standalone, but the root `docker-compose.yml` handles most env injection.*
+
+3.  **Start Services**
+    ```bash
+    docker-compose up -d --build
+    ```
+    *This will start Postgres, Kafka, Zookeeper, Redis, Mailhog, and all microservices.*
+
+4.  **Verify**
+    *   **Eureka Dashboard**: [http://localhost:8761](http://localhost:8761)
+    *   **Mailhog (Email Test)**: [http://localhost:8025](http://localhost:8025)
+    *   **API Gateway**: [http://localhost:8080](http://localhost:8080)
+
+### Local Development (Hybrid)
+To run a specific service (e.g., `product-service`) locally while keeping infra in Docker:
+
+1.  Start infrastructure only:
+    ```bash
+    cd devops/dev
+    docker-compose up -d
+    ```
+2.  Run the service:
+    ```bash
+    cd product-service
+    mvn spring-boot:run
+    ```
+
+---
+
+## 📊 Observability & Monitoring
+
+*   **Distributed Tracing**: Currently, logs are aggregated per container. Use `docker-compose logs -f <service_name>` to tail logs.
+*   **Mailhog**: Used to capture emails sent by the Email Service. Access the UI at `http://localhost:8025`.
+*   **Health Checks**: All services expose Spring Boot Actuator health endpoints (e.g., `/actuator/health`).
+
+---
+
+## 🔒 Security
+
+*   **JWT Authentication**: The `auth-service` issues tokens signed with a secret key.
+*   **Gateway Validation**: The `api-gateway` validates the signature of incoming requests before routing.
+*   **Secret Management**: Secrets are currently passed via environment variables.
+    *   *Remediation Note*: For production, use a secret manager (Vault, AWS Secrets Manager) instead of `.env` files.
+
+---
+
+## 🧪 Testing
+
+*   **Unit Tests**: Run with Maven.
+    ```bash
+    mvn test
+    ```
+*   **Integration Tests**: Located in `src/test/java`.
+*   **Linting**: Standard Java linting via Maven plugins.
+
+---
+
+## 📂 Data Model
+
+*   **User DB**: Stores user profiles and credentials.
+*   **Product DB**: Stores product catalog (Name, Price, Description, Stock).
+*   **Auth DB**: Stores admin/auth specific data (if separate from User DB).
+*   **Migrations**: Database schemas are managed via Hibernate `update` (auto-ddl). *Note: Recommended to switch to Flyway/Liquibase for production.*
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on code style and pull request process.
+
+## ❓ Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues like port conflicts or Docker errors.
