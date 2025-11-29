@@ -256,23 +256,12 @@ To run a specific service (e.g., `product-service`) locally while keeping infra 
 
 ---
 
-## 🧪 Testing
-
-*   **Unit Tests**: Run with Maven.
-    ```bash
-    mvn test
-    ```
-*   **Integration Tests**: Located in `src/test/java`.
-*   **Linting**: Standard Java linting via Maven plugins.
-
----
-
 ## 📂 Data Model
 
 *   **User DB**: Stores user profiles and credentials.
 *   **Product DB**: Stores product catalog (Name, Price, Description, Stock).
 *   **Auth DB**: Stores admin/auth specific data (if separate from User DB).
-*   **Migrations**: Database schemas are managed via Hibernate `update` (auto-ddl). *Note: Recommended to switch to Flyway/Liquibase for production.*
+*   **Migrations**: Database schemas are managed via Hibernate `update` (auto-ddl).
 
 ---
 
